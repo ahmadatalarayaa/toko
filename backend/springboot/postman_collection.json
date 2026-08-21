@@ -1,0 +1,519 @@
+{
+  "info": {
+    "name": "API Springboot - JWT Auth",
+    "description": "Collection testing Auth (register/login), Product (CRUD + role admin), dan User endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "user_token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "user_refresh_token",
+      "value": ""
+    },
+    {
+      "key": "admin_refresh_token",
+      "value": ""
+    },
+    {
+      "key": "product_id",
+      "value": "1"
+    },
+    {
+      "key": "user_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register (jadi USER biasa)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi User\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"rahasia123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Register (calon ADMIN - ubah role manual di DB nanti)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin12345\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (USER) - simpan token ke {{user_token}}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token) { pm.collectionVariables.set('user_token', res.token); }",
+                  "if (res.refreshToken) { pm.collectionVariables.set('user_refresh_token', res.refreshToken); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"budi@example.com\",\n  \"password\": \"rahasia123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (ADMIN) - simpan token ke {{admin_token}}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token) { pm.collectionVariables.set('admin_token', res.token); }",
+                  "if (res.refreshToken) { pm.collectionVariables.set('admin_refresh_token', res.refreshToken); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin12345\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token (pakai user_refresh_token) - dapat access token baru",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token) { pm.collectionVariables.set('user_token', res.token); }",
+                  "if (res.refreshToken) { pm.collectionVariables.set('user_refresh_token', res.refreshToken); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{user_refresh_token}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token PAKAI TOKEN LAMA LAGI -> harus 401 (rotation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{user_refresh_token}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout (pakai user_token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Product (public read, admin write)",
+      "item": [
+        {
+          "name": "Get All Products (bebas, tanpa token)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/products"
+          }
+        },
+        {
+          "name": "Get Product By Id (bebas, tanpa token)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/products/{{product_id}}"
+          }
+        },
+        {
+          "name": "Search Products - default (page 0, size 10)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Products - by keyword nama",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/products?keyword=laptop",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "laptop"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Products - filter harga min & max",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/products?minPrice=100000&maxPrice=1000000",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "minPrice",
+                  "value": "100000"
+                },
+                {
+                  "key": "maxPrice",
+                  "value": "1000000"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Products - sorting harga termahal dulu",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/products?sortBy=price&direction=desc",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "sortBy",
+                  "value": "price"
+                },
+                {
+                  "key": "direction",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Products - pagination halaman ke-2",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/products?page=1&size=5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Products - sortBy salah -> harus 400",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/products?sortBy=passwordRahasia",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "sortBy",
+                  "value": "passwordRahasia"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Product pakai USER token -> harus 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Keyboard Mekanik\",\n  \"description\": \"Keyboard gaming RGB\",\n  \"price\": 550000,\n  \"stock\": 10\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Product pakai ADMIN token -> harus 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Keyboard Mekanik\",\n  \"description\": \"Keyboard gaming RGB\",\n  \"price\": 550000,\n  \"stock\": 10\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Product pakai ADMIN token",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/products/{{product_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Keyboard Mekanik V2\",\n  \"description\": \"Keyboard gaming RGB hot-swap\",\n  \"price\": 650000,\n  \"stock\": 8\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Product pakai ADMIN token",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/products/{{product_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. User",
+      "item": [
+        {
+          "name": "Get My Profile (pakai USER token)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users/me"
+          }
+        },
+        {
+          "name": "Get All Users pakai USER token -> harus 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users"
+          }
+        },
+        {
+          "name": "Get All Users pakai ADMIN token -> harus 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users"
+          }
+        },
+        {
+          "name": "Get User By Id pakai ADMIN token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users/{{user_id}}"
+          }
+        },
+        {
+          "name": "Update User pakai ADMIN token",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users/{{user_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Updated\",\n  \"email\": \"budi.updated@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete User pakai ADMIN token",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users/{{user_id}}"
+          }
+        }
+      ]
+    }
+  ]
+}

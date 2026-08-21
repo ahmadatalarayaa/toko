@@ -1,0 +1,30 @@
+# === Frontend (Vite/React) ===
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# === Backend (Spring Boot/Maven) ===
+backend/springboot/target/
+backend/springboot/.mvn/wrapper/maven-wrapper.jar
+
+# === IDE ===
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
